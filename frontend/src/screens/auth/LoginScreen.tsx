@@ -10,7 +10,7 @@ const LoginScreen = ({ navigation }: any) => {
   const handleLogin = async () => {
     try {
       await login(email, password);
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert('Login Failed', error.message);
     }
   };

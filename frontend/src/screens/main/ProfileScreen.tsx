@@ -19,7 +19,7 @@ const ProfileScreen = () => {
         Alert.alert('Success', 'Profile updated successfully');
         setPassword('');
       }
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert('Error', error.message);
     }
   };

@@ -40,11 +40,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const { token } = await login(email, password);
+      const { token } = await login({email, password});
       await AsyncStorage.setItem('token', token);
       const userData = await getProfile();
       setUser(userData);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'Login failed');
       throw err;
     } finally {
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await register({ name, email, password });
       await handleLogin(email, password);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'Registration failed');
       throw err;
     } finally {

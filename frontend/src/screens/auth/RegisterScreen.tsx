@@ -11,7 +11,7 @@ const RegisterScreen = ({ navigation }: any) => {
   const handleRegister = async () => {
     try {
       await register(name, email, password);
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert('Registration Failed', error.message);
     }
   };
