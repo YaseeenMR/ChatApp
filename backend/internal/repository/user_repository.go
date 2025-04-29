@@ -65,3 +65,13 @@ func (r *UserRepository) UpdateUser(userID uint, updateData *models.UpdateProfil
 
 	return tx.Commit()
 }
+
+func (r *UserRepository) GetUserByID(userID uint) (*models.User, error) {
+	user := &models.User{}
+	query := `SELECT id, name, email FROM users WHERE id = $1`
+	err := r.db.QueryRow(query, userID).Scan(&user.ID, &user.Name, &user.Email)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
