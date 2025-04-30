@@ -8,7 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+// AuthMiddleware creates a middleware function with the jwtSecret
+func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -18,7 +19,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return []byte("your-secret-key"), nil
+			return []byte(jwtSecret), nil
 		})
 
 		if err != nil || !token.Valid {
@@ -32,7 +33,14 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("userID", claims["userID"])
+		// Handle both float64 and uint cases for userID
+		userID, ok := claims["userID"].(float64)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token"})
+			return
+		}
+
+		c.Set("userID", uint(userID))
 		c.Next()
 	}
 }

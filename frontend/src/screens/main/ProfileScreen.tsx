@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Alert } from 'react-native';
+import Button from '../../components/Button'; // adjust path if needed
 import { useAuth } from '../../context/AuthContext';
 import { updateProfile } from '../../services/auth';
 

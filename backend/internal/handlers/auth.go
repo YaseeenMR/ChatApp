@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -12,26 +14,62 @@ import (
 )
 
 type AuthHandler struct {
-	userRepo *repository.UserRepository
+	userRepo  *repository.UserRepository
+	jwtSecret string
 }
 
-func NewAuthHandler(userRepo *repository.UserRepository) *AuthHandler {
-	return &AuthHandler{userRepo: userRepo}
+func NewAuthHandler(userRepo *repository.UserRepository, jwtSecret string) *AuthHandler {
+	return &AuthHandler{
+		userRepo:  userRepo,
+		jwtSecret: jwtSecret,
+	}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
+		log.Printf("JSON bind error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	log.Printf("Attempting to register user: %+v", user)
 
-	if err := h.userRepo.CreateUser(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+	// Hash password
+	startTime := time.Now()
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Printf("Password hashing failed after %v: %v", time.Since(startTime), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to secure password"})
 		return
 	}
+	log.Printf("Password hashed successfully in %v", time.Since(startTime))
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully", "userId": user.ID})
+	// Set the hashed password before creating user
+	user.Password = string(hashedPassword)
+
+	// Database operation
+	startTime = time.Now()
+	err = h.userRepo.CreateUser(&user)
+	if err != nil {
+		log.Printf("Database operation failed after %v: %v", time.Since(startTime), err)
+
+		if strings.Contains(err.Error(), "duplicate key") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Email already exists"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to create user",
+			"details": err.Error(),
+		})
+		return
+	}
+	log.Printf("User created successfully in %v", time.Since(startTime))
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "User created successfully",
+		"userId":  user.ID,
+	})
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
@@ -52,16 +90,24 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	// Generate JWT token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID": user.ID,
 		"exp":    time.Now().Add(time.Hour * 24).Unix(),
 	})
 
-	tokenString, err := token.SignedString([]byte("your-secret-key"))
+	tokenString, err := token.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": tokenString})
+	c.JSON(http.StatusOK, gin.H{
+		"token": tokenString,
+		"user": gin.H{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+		},
+	})
 }

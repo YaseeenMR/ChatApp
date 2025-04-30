@@ -23,7 +23,21 @@ func (h *ProfileHandler) GetProfile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userRepo.GetUserByID(userID.(uint))
+	// Handle different numeric types
+	var id uint
+	switch v := userID.(type) {
+	case float64:
+		id = uint(v)
+	case uint:
+		id = v
+	case int:
+		id = uint(v)
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+		return
+	}
+
+	user, err := h.userRepo.GetUserByID(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return

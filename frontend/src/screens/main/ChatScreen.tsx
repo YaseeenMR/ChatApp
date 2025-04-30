@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, FlatList } from 'react-native';
+import Button from '../../components/Button'; // adjust path if needed
 import { useAuth } from '../../context/AuthContext';
 import MessageBubble from '../../components/MessageBubble';
 
@@ -9,7 +10,7 @@ const mockMessages = [
   { id: '2', text: 'Hi! How are you?', sender: 'me', timestamp: new Date() },
 ];
 
-const ChatScreen = () => {
+const ChatScreen = ({ navigation }: any) => {
   const [messages, setMessages] = useState(mockMessages);
   const [newMessage, setNewMessage] = useState('');
   const { user, logout } = useAuth();
@@ -52,6 +53,7 @@ const ChatScreen = () => {
         <Button title="Send" onPress={handleSend} />
       </View>
       <Button title="Logout" onPress={logout} />
+      <Button title="Update Profile" onPress={() => navigation.navigate('Profile')} />
     </View>
   );
 };

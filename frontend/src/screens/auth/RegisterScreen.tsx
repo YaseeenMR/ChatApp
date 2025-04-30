@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Alert } from 'react-native';
+import Button from '../../components/Button'; // adjust path if needed
 import { useAuth } from '../../context/AuthContext';
 
 const RegisterScreen = ({ navigation }: any) => {
@@ -54,6 +55,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#e7e5e4'
   },
   title: {
     fontSize: 24,
